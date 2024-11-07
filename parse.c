@@ -18,6 +18,7 @@
 #include "nfqrt.h"
 #include <errno.h>
 #include "uhash.h"
+#include "hostlist.h"
 
 extern UHash_connHash* map, *set;
 
@@ -86,7 +87,10 @@ int callback(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *n
                 if (snilen > 0)
                 {
                     mark |= MARK1;
-                    if (strncmp(sni, "2ip.ru", snilen) == 0)
+                    char* cstrSni = malloc(snilen + 1);
+                    strncpy(cstrSni, sni, snilen);
+                    cstrSni[snilen] = 0;
+                    if (isInList(cstrSni))
                     {
                         printf("%.*s\n", snilen, sni);
                         cdata.srcPort = 0;
@@ -101,6 +105,8 @@ int callback(struct nfq_q_handle *qh, struct nfgenmsg *nfmsg, struct nfq_data *n
                         nfq_set_verdict2(qh, id, NF_REPEAT, mark &~ MARK2, len, data); // Default routing
                         printf("SNI not in list\n");
                     }
+
+                    free(cstrSni);
                 }
                 else if (snilen == 0)
                 {

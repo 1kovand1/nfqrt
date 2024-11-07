@@ -18,11 +18,13 @@
 #include "nfqrt.h"
 #include <errno.h>
 #include "uhash.h"
+#include "hostlist.h"
 
 UHash_connHash *map, *set;
 
 int main(int, char**)
 {
+    loadList("/home/alex/hostlist.txt");
     struct nfq_handle* handle = init_libnfq(); 
     struct nfq_q_handle* qh = bind_queue(handle, QNUM);
     map = uhmap_alloc_connHash();
@@ -40,12 +42,13 @@ int main(int, char**)
 
     //destroy
 
+    freeList();
     uhash_free_connHash(map);
     uhash_free_connHash(set);
+    nfq_destroy_queue(qh);
     nfq_close(handle);
     return 0;
 }
-//iptables -A OUTPUT -p tcp --tcp-flags SYN,PSH,FIN,RST,ACK PSH,ACK --dport 443 -j NFQUEUE --queue-num 123 --queue-bypass
 
 
 struct nfq_handle* init_libnfq()
